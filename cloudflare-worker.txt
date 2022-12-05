@@ -1,0 +1,48 @@
+addEventListener('fetch', event => {
+  event.respondWith(handleRequest(event))
+})
+
+function isInArray(value, array) {
+  return array.indexOf(value) > -1;
+}
+
+async function handleRequest(event) {
+  request = event.request
+  path = new URL(request.url).pathname
+  if (isInArray(path, ['/'])) {
+	let real = request.headers.get('cf-connecting-ip');
+  	response = new Response(`${real}\n`, {
+  		headers: {
+  			"Content-Type": "text/plain"
+  		}
+  	});
+  }
+
+  if (path === '/json') {
+    let headers = [...request.headers]
+    let headerObject = {}
+    for (let header of headers) {
+      headerObject[header[0]] = header[1]
+    }
+    console.log(headerObject)
+    response = new Response(JSON.stringify(headerObject, null, 2), {
+  		headers: {
+  			"Content-Type": "application/json"
+  		}
+  	});
+  }
+
+  if (isInArray(path, ['/headers', '/more'])) {
+	let arr = [];
+  	for (let entry of request.headers.entries()) {
+    	arr.push(entry[0] + ": " + entry[1]);
+  	}
+  	response = new Response(`${arr.join("\n")}\n`, {
+  		headers: {
+  			"Content-Type": "text/plain"
+  		}
+  	});
+  }
+
+  return response
+}
